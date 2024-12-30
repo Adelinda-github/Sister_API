@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+      #sidebar {
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 250px;
+        background-color: #f8f9fa;
+        padding-top: 20px;
+      }
+      #content {
+        margin-left: 250px;
+        padding: 20px;
+      }
+      .active {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sidebar">
+      <h2 class="text-center">Dashboard</h2>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a
+            href="#"
+            class="nav-link"
+            id="products-link"
+            onclick="showPage('products')"
+            >Products</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            href="#"
+            class="nav-link"
+            id="consumers-link"
+            onclick="showPage('consumers')"
+            >Consumers</a
+          >
+        </li>
+      </ul>
+    </div>
+
+    <div id="content">
+      <div id="products-page" style="display: none">
+        <h2>Products</h2>
+        <!-- Search Form -->
+        <div class="mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="product-search"
+            placeholder="Search Products by Name"
+            onkeyup="searchProducts()" />
+        </div>
+        <button class="btn btn-primary mb-3" onclick="fetchProducts()">
+          Load Products
+        </button>
+        <button class="btn btn-success mb-3" onclick="addProduct()">
+          Add Product
+        </button>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-table">
+            <!-- Data will be populated here -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="consumers-page" style="display: none">
+        <h2>Consumers</h2>
+        <!-- Search Form -->
+        <div class="mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="consumer-search"
+            placeholder="Search Consumers by Name"
+            onkeyup="searchConsumers()" />
+        </div>
+        <button class="btn btn-primary mb-3" onclick="fetchConsumers()">
+          Load Consumers
+        </button>
+        <button class="btn btn-success mb-3" onclick="addConsumer()">
+          Add Consumer
+        </button>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="consumers-table">
+            <!-- Data will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      const apiBase = "http://localhost:3000";
+
+      function showPage(page) {
+        // Update active link in the sidebar
+        document
+          .querySelectorAll("#sidebar .nav-link")
+          .forEach((link) => link.classList.remove("active"));
+        document.getElementById(`${page}-link`).classList.add("active");
+
+        // Show the selected page and hide others
+        document.getElementById("products-page").style.display =
+          page === "products" ? "block" : "none";
+        document.getElementById("consumers-page").style.display =
+          page === "consumers" ? "block" : "none";
+      }
+
+      async function fetchProducts() {
+        try {
+          const response = await axios.get(`${apiBase}/products`);
+          const products = response.data;
+          const table = document.getElementById("products-table");
+          table.innerHTML = "";
+          products.forEach((product) => {
+            table.innerHTML += `
+                        <tr>
+                            <td>${product.id}</td>
+                            <td>${product.name}</td>
+                            <td>${product.category}</td>
+                            <td>Rp ${product.price}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" onclick="editProduct('${product.id}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${product.id}')">Delete</button>
+                            </td>
+                        </tr>`;
+          });
+        } catch (error) {
+          console.error("Error fetching products:", error);
+        }
+      }
+
+      async function fetchConsumers() {
+        try {
+          const response = await axios.get(`${apiBase}/consumers`);
+          const consumers = response.data;
+          const table = document.getElementById("consumers-table");
+          table.innerHTML = "";
+          consumers.forEach((consumer) => {
+            table.innerHTML += `
+                        <tr>
+                            <td>${consumer.id}</td>
+                            <td>${consumer.name}</td>
+                            <td>${consumer.email}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" onclick="editConsumer('${consumer.id}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteConsumer('${consumer.id}')">Delete</button>
+                            </td>
+                        </tr>`;
+          });
+        } catch (error) {
+          console.error("Error fetching consumers:", error);
+        }
+      }
+
+      // Product Search Function
+      function searchProducts() {
+        const searchQuery = document
+          .getElementById("product-search")
+          .value.toLowerCase();
+        const rows = document.querySelectorAll("#products-table tr");
+        rows.forEach((row) => {
+          const productName = row.cells[1].textContent.toLowerCase();
+          row.style.display = productName.includes(searchQuery) ? "" : "none";
+        });
+      }
+
+      // Consumer Search Function
+      function searchConsumers() {
+        const searchQuery = document
+          .getElementById("consumer-search")
+          .value.toLowerCase();
+        const rows = document.querySelectorAll("#consumers-table tr");
+        rows.forEach((row) => {
+          const consumerName = row.cells[1].textContent.toLowerCase();
+          row.style.display = consumerName.includes(searchQuery) ? "" : "none";
+        });
+      }
+
+      async function addProduct() {
+        const name = prompt("Enter product name:");
+        const category = prompt("Enter product category:");
+        const price = prompt("Enter product price:");
+
+        if (!name || !category || !price)
+          return alert("All fields are required!");
+
+        try {
+          await axios.post(`${apiBase}/products`, { name, category, price });
+          fetchProducts();
+        } catch (error) {
+          console.error("Error adding product:", error);
+        }
+      }
+
+      async function addConsumer() {
+        const name = prompt("Enter consumer name:");
+        const email = prompt("Enter consumer email:");
+
+        if (!name || !email) return alert("All fields are required!");
+
+        try {
+          await axios.post(`${apiBase}/consumers`, { name, email });
+          fetchConsumers();
+        } catch (error) {
+          console.error("Error adding consumer:", error);
+        }
+      }
+
+      async function editProduct(id) {
+        const name = prompt("Enter new product name:");
+        const category = prompt("Enter new product category:");
+        const price = prompt("Enter new product price:");
+
+        if (!name || !category || !price)
+          return alert("All fields are required!");
+
+        try {
+          await axios.put(`${apiBase}/products/${id}`, {
+            name,
+            category,
+            price,
+          });
+          fetchProducts();
+        } catch (error) {
+          console.error("Error editing product:", error);
+        }
+      }
+
+      async function editConsumer(id) {
+        const name = prompt("Enter new consumer name:");
+        const email = prompt("Enter new consumer email:");
+
+        if (!name || !email) return alert("All fields are required!");
+
+        try {
+          await axios.put(`${apiBase}/consumers/${id}`, { name, email });
+          fetchConsumers();
+        } catch (error) {
+          console.error("Error editing consumer:", error);
+        }
+      }
+
+      async function deleteProduct(id) {
+        if (!confirm("Are you sure you want to delete this product?")) return;
+
+        try {
+          await axios.delete(`${apiBase}/products/${id}`);
+          fetchProducts();
+        } catch (error) {
+          console.error("Error deleting product:", error);
+        }
+      }
+
+      async function deleteConsumer(id) {
+        if (!confirm("Are you sure you want to delete this consumer?")) return;
+
+        try {
+          await axios.delete(`${apiBase}/consumers/${id}`);
+          fetchConsumers();
+        } catch (error) {
+          console.error("Error deleting consumer:", error);
+        }
+      }
+
+      // Initialize default page
+      showPage("products");
+    </script>
+  </body>
+</html>
